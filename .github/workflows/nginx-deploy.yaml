@@ -14,14 +14,14 @@ jobs:
       uses: actions/checkout@v3
 
     - name: Set up SSH Agent
-      uses: webfactory/ssh-agent@v0.8.1
+      uses: webfactory/ssh-agent@v0.5.4
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
     - name: Transfer Nginx Config Files
       run: |
-        scp -o StrictHostKeyChecking=no -r ./nginx-config/* ubuntu@13.60.93.113:/etc/nginx/
+        scp -i mykey.pem -o StrictHostKeyChecking=no -r ./nginx-config/* ubuntu@13.60.93.113:/etc/nginx/
       
     - name: Restart Nginx Service
       run: |
-        ssh -o StrictHostKeyChecking=no ubuntu@13.60.93.113 'sudo systemctl restart nginx'
+        ssh -i mykey.pem -o StrictHostKeyChecking=no ubuntu@13.60.93.113 'sudo systemctl restart nginx'
