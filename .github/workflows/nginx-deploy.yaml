@@ -20,8 +20,8 @@ jobs:
 
     - name: Transfer Nginx Config Files
       run: |
-        scp -o StrictHostKeyChecking=no -r ./nginx-config/* ubuntu@XXX:/etc/nginx/
+        scp -o StrictHostKeyChecking=no -r ./nginx-config/* ubuntu@13.60.93.113:/etc/nginx/
       
     - name: Restart Nginx Service
       run: |
-        ssh -o StrictHostKeyChecking=no ubuntu@XXX 'sudo systemctl restart nginx'
+        ssh -o StrictHostKeyChecking=no ubuntu@13.60.93.113 'sudo systemctl restart nginx'
