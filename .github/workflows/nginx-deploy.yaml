@@ -4,7 +4,9 @@ on:
   push:
     branches:
       - main  
-
+env:
+  EC2_PUBLIC_IP: 13.60.93.113
+  SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -17,11 +19,15 @@ jobs:
       uses: webfactory/ssh-agent@v0.5.4
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+    - name: SSH to EC2 instance
+        run: |
+          echo "$SSH_PRIVATE_KEY" > mykey.pem
+          chmod 400 mykey.pem
 
     - name: Transfer Nginx Config Files
       run: |
-        scp -o StrictHostKeyChecking=no -r ./nginx-config/* ubuntu@13.60.93.113:/etc/nginx
+        scp -i mykey.pem -o StrictHostKeyChecking=no -r ./nginx-config/* ubuntu@$EC2_PUBLIC_IP:/etc/nginx
       
     - name: Restart Nginx Service
       run: |
-        ssh -o StrictHostKeyChecking=no ubuntu@13.60.93.113 'sudo systemctl restart nginx'
+        ssh -i mykey.pem -o StrictHostKeyChecking=no ubuntu@$EC2_PUBLIC_IP 'sudo systemctl restart nginx'
