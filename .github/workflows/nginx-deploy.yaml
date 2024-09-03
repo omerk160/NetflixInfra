@@ -15,20 +15,19 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
-
+      
+    - name: SSH to EC2 instance
+      run: |
+          echo "$SSH_PRIVATE_KEY" > mykey.pem
+          chmod 400 mykey.pem
+          
     - name: Set up SSH Agent
       uses: webfactory/ssh-agent@v0.5.4
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-    - name: SSH to EC2 instance
-        run: |
-          echo "$SSH_PRIVATE_KEY" > mykey.pem
-          chmod 400 mykey.pem
-
     - name: Transfer Nginx Config Files
       run: |
         scp -i mykey.pem -o StrictHostKeyChecking=no -r ./nginx-config/* ubuntu@$EC2_PUBLIC_IP:/etc/nginx
-      
     - name: Restart Nginx Service
       run: |
         ssh -i mykey.pem -o StrictHostKeyChecking=no ubuntu@$EC2_PUBLIC_IP 'sudo systemctl restart nginx'
