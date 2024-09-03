@@ -20,7 +20,7 @@ jobs:
 
     - name: Transfer Nginx Config Files
       run: |
-        scp -i mykey.pem -o StrictHostKeyChecking=no -r ./nginx-config/* ubuntu@13.60.93.113:/etc/nginx/
+        sudo scp -i mykey.pem -o StrictHostKeyChecking=no -r ./nginx-config/* ubuntu@13.60.93.113:/etc/nginx
       
     - name: Restart Nginx Service
       run: |
