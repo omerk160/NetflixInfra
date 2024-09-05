@@ -1,3 +1,3 @@
-# NetflixInfra [![][autotest_badge]][autotest_workflow]
+# NetflixInfra
 
 This is the repo from Nginx exrecises, CI/CD workflow :)
