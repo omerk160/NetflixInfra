@@ -12,7 +12,7 @@ services:
       - netflix-frontend
     volumes:
       - /home/ubuntu/nginx.conf:/etc/nginx/nginx.conf:ro
-
+#
   netflix-frontend:
     image: omerk160/nf:1.0.0
     container_name: netflix-frontend
