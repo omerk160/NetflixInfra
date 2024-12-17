@@ -1,0 +1,34 @@
+name: NetflixMovieCatalog Build
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  Build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repo code
+        uses: actions/checkout@v2
+
+      - name: Build and push image
+        run: |                 
+          docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_PASSWORD }}
+
+          IMAGE_NAME=omerk160/netflix-catalog:${{ github.run_number }}
+          docker build -t $IMAGE_NAME .
+          docker push $IMAGE_NAME
+
+  TriggerDeployment:
+    runs-on: ubuntu-latest
+    needs: Build
+    steps:
+     - name: Trigger the deployment workflow
+       run: |
+         IMAGE_NAME=omerk160/netflix-catalog:${{ github.run_number }}
+         curl -X POST \
+          -H "Authorization: Bearer ${{ secrets.GITHUB_ACCESS_TOKEN }}" \
+          -H "Accept: application/vnd.github.v3+json" \
+          -d "{\"ref\": \"main\", \"inputs\": {\"service_name\": \"netflix-catalog\", \"image\": \"$IMAGE_NAME\"}}" \
+          https://api.github.com/repos/omerk160/NetflixInfra/actions/workflows/build.yaml/dispatches
