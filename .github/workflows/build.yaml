@@ -23,12 +23,8 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Update docker-compose.yaml
-        uses: mikefarah/yq@master
-        env:
-          SERVICE_NAME: ${{ github.event.inputs.service_name }}
-          IMAGE_NAME: ${{ github.event.inputs.image }}
-        with:
-          cmd: 'yq e ".services.${{ github.event.inputs.service_name }}.image = \"${{ github.event.inputs.image }}\"" -i docker-compose.yaml'
+        run: |
+         yq e ".services.${{ github.event.inputs.service_name }}.image = \"${{ github.event.inputs.image }}\"" -i docker-compose.yaml
 
 
       - name: Commit and push changes
