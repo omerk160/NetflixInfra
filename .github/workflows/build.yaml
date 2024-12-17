@@ -28,15 +28,16 @@ jobs:
           SERVICE_NAME: ${{ github.event.inputs.service_name }}
           IMAGE_NAME: ${{ github.event.inputs.image }}
         with:
-          cmd: yq e ".services.${SERVICE_NAME}.image = \"${IMAGE_NAME}\"" -i docker-compose.yaml
+          cmd: yq e ".services.\$SERVICE_NAME.image = \"\$IMAGE_NAME\"" -i docker-compose.yaml
 
-      - name: commit and push
+      - name: Commit and push changes
         run: |
           git config --local user.email "java@katas"
           git config --local user.name "auto-test"
 
-          git add docker-compose.yaml && git commit -m "Update ${{ github.event.inputs.service_name }} image to ${{ github.event.inputs.image }}"
-          git push origin main --force
+          git add docker-compose.yaml
+          git commit -m "Update ${{ github.event.inputs.service_name }} image to ${{ github.event.inputs.image }}"
+          git push origin main
 
   Deploy:
     name: Deploy a Netflix stack service
@@ -54,10 +55,10 @@ jobs:
           script: |
             repo_dir=${{ github.event.inputs.service_name }}_${GITHUB_RUN_ID}
             git clone https://github.com/${GITHUB_REPOSITORY} $repo_dir
-            
+
             cd $repo_dir
-            
+
             service_name=${{ github.event.inputs.service_name }}
             docker compose up -d $service_name
-            
+
             echo "Deploy completed."
