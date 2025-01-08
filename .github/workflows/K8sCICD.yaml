@@ -1,0 +1,60 @@
+name: NetflixFrontend Stack Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the NetflixFrontend repository
+      - name: Checkout NetflixFrontend repository
+        uses: actions/checkout@v3
+
+      # Step 2: Log in to DockerHub
+      - name: Log in to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      # Step 3: Build and Push Docker image
+      - name: Build and Push Docker Image
+        run: |
+          IMAGE_NAME=omerk160/nf:latest
+          docker build -t $IMAGE_NAME .
+          docker push omerk160/$IMAGE_NAME
+
+      # Step 4: Checkout Infrastructure Repository
+      - name: Checkout Infrastructure Repository
+        uses: actions/checkout@v3
+        with:
+          repository: https://github.com/omerk160/NetflixInfra.git
+          token: ${{ secrets.REPO_TOKEN }}
+          path: ./NetflixInfra
+
+      # Step 5: Update Kubernetes YAML Manifests
+      - name: Update Kubernetes Manifests
+        run: |
+          cd ./NetflixInfra
+          FRONTEND_DEPLOYMENT_FILE=k8s/NetflixFrontend/netflix-frontend-deploy.yaml
+          IMAGE_NAME=omerk160/nf:latest
+          
+          # Update the image tag in the deployment YAML
+          sed -i "s|image: .*|image: $IMAGE_NAME|g" $FRONTEND_DEPLOYMENT_FILE
+
+      # Step 6: Commit and Push Changes to Infrastructure Repository
+      - name: Commit and Push Changes
+        run: |
+          cd ./NetflixInfra
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git add .
+          git commit -m "Updated NetflixFrontend image to $IMAGE_NAME"
+          git push
