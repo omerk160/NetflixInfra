@@ -21,7 +21,7 @@ spec:
         - containerPort: 3000
         env:
         - name: MOVIE_CATALOG_SERVICE
-          value: "http://netflix-movie-catalog:8080" # This matches the name of the Service and port
+          value: "http://omer-Netflix-LB-1871166628.eu-north-1.elb.amazonaws.com:8080" # This matches the name of the Service and port
 
 ---
 apiVersion: v1
