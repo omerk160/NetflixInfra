@@ -6,7 +6,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - host: omer-Netflix-LB-1871166628.eu-north-1.elb.amazonaws.com
+  - host: omer-netflix-lb-1871166628.eu-north-1.elb.amazonaws.com
     http:
       paths:
       - path: /
