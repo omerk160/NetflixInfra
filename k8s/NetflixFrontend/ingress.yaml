@@ -1,4 +1,3 @@
-# k8s/ingress-demo.yaml
 
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -7,7 +6,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - host: omer-netflix-frontend.devops-int-college.com
+  - host: omer-Netflix-LB-1871166628.eu-north-1.elb.amazonaws.com
     http:
       paths:
       - path: /
