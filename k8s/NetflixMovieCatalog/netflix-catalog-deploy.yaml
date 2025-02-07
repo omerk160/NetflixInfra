@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: netflix-catalog
-        image: omerk160/netflix-movie-catalog:v2
+        image: omerk160/netflix-movie-catalog:v3
 
 ---
 apiVersion: v1
