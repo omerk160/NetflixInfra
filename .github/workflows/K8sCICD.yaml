@@ -27,7 +27,7 @@ jobs:
       # Step 3: Build and Push Docker image
       - name: Build and Push Docker Image
         run: |
-          IMAGE_NAME=omerk160/nf:latest
+          IMAGE_NAME=omerk160/nf:
           docker build -t $IMAGE_NAME .
           docker push omerk160/$IMAGE_NAME
 
