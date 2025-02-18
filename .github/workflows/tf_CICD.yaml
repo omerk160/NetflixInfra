@@ -18,7 +18,7 @@ on:
         type: choice
         options:
           - us-east-1
-          - eu-central-1
+          - eu-north-1
 
 jobs:
   provision-infra:
