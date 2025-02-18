@@ -45,9 +45,9 @@ jobs:
 
       - name: Plan Terraform
         run: terraform plan -var-file="region.${{ github.event.inputs.region }}.${{ github.event.inputs.environment }}.tfvars"
-        working-directory: NetflixInfra/tf
+        working-directory: ${{ github.workspace }}/NetflixInfra/tf
 
       - name: Apply Terraform
         run: terraform apply -auto-approve -var-file="region.${{ github.event.inputs.region }}.${{ github.event.inputs.environment }}.tfvars"
-        working-directory: NetflixInfra/tf
+        working-directory: ${{ github.workspace }}/NetflixInfra/tf
 
