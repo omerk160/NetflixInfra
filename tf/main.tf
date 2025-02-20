@@ -23,7 +23,7 @@ provider "aws" {
 
 resource "aws_key_pair" "netflix_key" {
   key_name   = "netflix_key"                         # Name of the key pair
-  public_key = file("/home/omer/netflix_tf_key.pub") # Path to the public key file
+  public_key = file("./netflix_tf_key.pub") # Path to the public key file
 }
 
 resource "aws_instance" "netflix_app" {
