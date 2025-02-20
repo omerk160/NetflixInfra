@@ -25,6 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
       - name: Debug Directory Structure
         run: ls -R
 
@@ -40,7 +41,7 @@ jobs:
 
       - name: Terraform Init
         run: terraform init -reconfigure
-        working-directory: ./terraform
+        working-directory: ./tf
 
       - name: Terraform Plan
         env:
@@ -53,9 +54,7 @@ jobs:
             -var "AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY" \
             -var "ssh_public_key=$SSH_PUBLIC_KEY" \
             -var-file=${{ github.event.inputs.environment }}.tfvars
-        working-directory: terraform
-
-
+        working-directory: ./tf
 
       - name: Terraform Apply
         env:
@@ -68,4 +67,4 @@ jobs:
             -var "AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY" \
             -var "ssh_public_key=$SSH_PUBLIC_KEY" \
             -var-file=${{ github.event.inputs.environment }}.tfvars
-        working-directory: terraform
+        working-directory: ./tf
