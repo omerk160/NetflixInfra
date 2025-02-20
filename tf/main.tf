@@ -18,7 +18,6 @@ terraform {
 
 provider "aws" {
   region  = var.region # AWS region to deploy resources
-  profile = "default"  # AWS CLI profile to use
 }
 
 resource "aws_key_pair" "netflix_key" {
