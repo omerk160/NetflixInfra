@@ -50,6 +50,7 @@ jobs:
       - name: Debug Terraform Variables File
         run: |
           echo "Using tfvars file: $TFVARS_FILE"
+          pwd
           ls -l ./tf
         working-directory: ./tf
 
