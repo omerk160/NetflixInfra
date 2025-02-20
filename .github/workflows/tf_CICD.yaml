@@ -47,13 +47,14 @@ jobs:
         run: echo "TFVARS_FILE=region.${{ github.event.inputs.region }}.${{ github.event.inputs.environment }}.tfvars" >> $GITHUB_ENV
         working-directory: ./tf
 
-      - name: Debug Terraform Variables File
-        run: |
-          echo "Using tfvars file: $TFVARS_FILE"
-          pwd
-          ls -l ./tf
-        working-directory: ./tf
-
+###
+###      - name: Debug Terraform Variables File
+###        run: |
+###          echo "Using tfvars file: $TFVARS_FILE"
+###          pwd
+###          ls -l ./tf
+###        working-directory: ./tf
+###
       - name: Terraform Plan
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
