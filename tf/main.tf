@@ -9,7 +9,7 @@ terraform {
   required_version = ">= 1.7.0"
 
   backend "s3" {
-    bucket = "omer-netflix-infra-tfstate"
+    bucket = "omer-tf-netflix-infra-s3"
     key    = "tfstate.json"
     region = "eu-north-1"
   }
@@ -43,7 +43,7 @@ data "aws_availability_zones" "available_azs" {
 
 resource "aws_key_pair" "netflix_key" {
   key_name   = "netflix_key"
-  public_key = file("./netflix_key.pub")
+  public_key = file("./netflix_tf_key.pub")
 }
 
 data "aws_ami" "ubuntu_ami" {
@@ -84,7 +84,7 @@ resource "aws_iam_policy" "netflix_app_policy" {
       {
         Effect   = "Allow",
         Action   = ["s3:ListBucket", "s3:GetObject", "s3:PutObject"],
-        Resource = ["arn:aws:s3:::omer-netflix-*", "arn:aws:s3:::omer-netflix-*/*"]
+        Resource = ["arn:aws:s3:::omer-tf-netflix-infra-s3", "arn:aws:s3:::omer-tf-netflix-infra-s3/*"]
       },
       {
         Effect   = "Allow",
@@ -113,7 +113,7 @@ resource "aws_iam_role_policy_attachment" "netflix_app_role_attachment" {
 
 # IAM Instance Profile
 resource "aws_iam_instance_profile" "netflix_app_profile" {
-  name = "netflix-instance-profile"
+  name = "omer-netflix-instance-profile"
   role = aws_iam_role.netflix_app_role.name
 }
 
