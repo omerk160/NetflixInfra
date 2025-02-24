@@ -2,96 +2,203 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = ">=5.55" # Specify the AWS provider version
+      version = ">=5.55"
     }
   }
 
-  required_version = ">= 1.7.0" # Specify the required Terraform version
-
+  required_version = ">= 1.7.0"
 
   backend "s3" {
-    bucket = "omer-tf-netflix-infra-s3"
+    bucket = "omer-netflix-infra-tfstate"
     key    = "tfstate.json"
     region = "eu-north-1"
   }
 }
 
+module "netflix_app_vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "5.8.1"
+
+  name = "omer-netflix-vpc"
+  cidr = "10.0.0.0/16"
+
+  azs             = data.aws_availability_zones.available_azs.names
+  private_subnets = ["10.0.0.0/28", "10.0.0.32/28"]
+  public_subnets  = ["10.0.1.0/28", "10.0.2.0/28"]
+
+  enable_nat_gateway = true
+
+  tags = {
+    Env = var.env
+  }
+}
+
 provider "aws" {
-  region  = var.region # AWS region to deploy resources
+  region = var.region
+}
+
+data "aws_availability_zones" "available_azs" {
+  state = "available"
 }
 
 resource "aws_key_pair" "netflix_key" {
-  key_name   = "netflix_key"                         # Name of the key pair
-  public_key = file("./netflix_tf_key.pub") # Path to the public key file
+  key_name   = "netflix_key"
+  public_key = file("./netflix_key.pub")
 }
 
-resource "aws_instance" "netflix_app" {
-  #ami             = "ami-02e2af61198e99faf"  # Amazon Machine Image ID
-  ami             = var.ami_id
-  instance_type   = "t3.micro"                               # EC2 instance type
-  key_name        = aws_key_pair.netflix_key.key_name        # Key pair to use for the instance
-  user_data       = file("./deploy.sh")                      # Script to run on instance launch
-  security_groups = [aws_security_group.netflix_app_sg.name] # Security group to associate
+data "aws_ami" "ubuntu_ami" {
+  most_recent = true
+  owners      = ["099720109477"]
 
-  tags = {
-    Name      = "omer_tf_netflix_stack_3${var.env}" # Tag for the instance
-    Terraform = "Owned"                             # Tag indicating ownership by Terraform
-    Env       = var.env                             # Tag indicating the deployment environment
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
   }
 }
 
-resource "aws_security_group" "netflix_app_sg" {
-  name        = "omer-netflix-app-sg"        # Name of the security group
-  description = "Allow SSH and HTTP traffic" # Description of the security group
-
-  ingress {
-    from_port   = 22 # Allow SSH traffic
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] # Allow from any IP
-  }
-
-  ingress {
-    from_port   = 8080 # Allow HTTP traffic
-    to_port     = 8080
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] # Allow from any IP
-  }
-
-  egress {
-    from_port   = 0 # Allow all outbound traffic
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"] # Allow to any IP
-  }
-}
-
-resource "aws_ebs_volume" "netflix_data" {
-  availability_zone = aws_instance.netflix_app.availability_zone # Availability zone for the volume
-  size              = 5                                          # Size of the volume in GB
-  tags = {
-    Name = "NetflixData" # Tag for the volume
-  }
-}
-
+# IAM Role for EC2
 resource "aws_iam_role" "netflix_app_role" {
-  name = "omer-tff-role"             # Name of the IAM role
-  assume_role_policy = jsonencode({ # Policy to allow EC2 to assume this role
-    "Version" = "2012-10-17",
-    "Statement" = [
+  name = "omer-tff-role"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
       {
-        "Effect" = "Allow",
-        "Principal" = {
-          "Service" = "ec2.amazonaws.com"
+        Effect = "Allow",
+        Principal = {
+          Service = "ec2.amazonaws.com"
         },
-        "Action" = "sts:AssumeRole"
+        Action = "sts:AssumeRole"
       }
     ]
   })
 }
 
+# IAM Policy
+resource "aws_iam_policy" "netflix_app_policy" {
+  name        = "omer-netflix-app-policy"
+  description = "Policy for EC2 Netflix application to access AWS services"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect   = "Allow",
+        Action   = ["s3:ListBucket", "s3:GetObject", "s3:PutObject"],
+        Resource = ["arn:aws:s3:::omer-netflix-*", "arn:aws:s3:::omer-netflix-*/*"]
+      },
+      {
+        Effect   = "Allow",
+        Action   = ["ec2:DescribeInstances", "ec2:DescribeVolumes"],
+        Resource = "*"
+      },
+      {
+        Effect   = "Allow",
+        Action   = ["logs:CreateLogStream", "logs:PutLogEvents"],
+        Resource = "arn:aws:logs:eu-north-1:352708296901:*"
+      },
+      {
+        Effect   = "Allow",
+        Action   = ["ssm:GetParameter", "ssm:PutParameter"],
+        Resource = "arn:aws:ssm:eu-north-1:352708296901:parameter/*"
+      }
+    ]
+  })
+}
+
+# Attach IAM Policy to Role
+resource "aws_iam_role_policy_attachment" "netflix_app_role_attachment" {
+  role       = aws_iam_role.netflix_app_role.name
+  policy_arn = aws_iam_policy.netflix_app_policy.arn
+}
+
+# IAM Instance Profile
+resource "aws_iam_instance_profile" "netflix_app_profile" {
+  name = "netflix-instance-profile"
+  role = aws_iam_role.netflix_app_role.name
+}
+
+resource "aws_instance" "netflix_app" {
+  ami                    = data.aws_ami.ubuntu_ami.id
+  instance_type          = "t3.micro"
+  key_name               = aws_key_pair.netflix_key.key_name
+  user_data              = file("./deploy.sh")
+  vpc_security_group_ids = [aws_security_group.netflix_app_sg.id]
+  subnet_id              = module.netflix_app_vpc.public_subnets[0]
+  associate_public_ip_address = true
+  iam_instance_profile   = aws_iam_instance_profile.netflix_app_profile.name
+
+  tags = {
+    Name      = "omer-netflix-${var.env}"
+    Terraform = "Owned"
+    Env       = var.env
+  }
+}
+
+resource "aws_security_group" "netflix_app_sg" {
+  name        = "omer-netflix-stack-sg"
+  description = "Allow SSH and HTTP traffic"
+  vpc_id      = module.netflix_app_vpc.vpc_id
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 8081
+    to_port     = 8081
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 3000
+    to_port     = 3000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 3001
+    to_port     = 3001
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 9090
+    to_port     = 9090
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+resource "aws_ebs_volume" "netflix_data" {
+  availability_zone = aws_instance.netflix_app.availability_zone
+  size              = 5
+  tags = {
+    Name = "NetflixData"
+  }
+}
+
 resource "aws_volume_attachment" "netflix_data_attach" {
-  device_name = "/dev/xvdf"                    # Device name for the volume
-  volume_id   = aws_ebs_volume.netflix_data.id # ID of the volume to attach
-  instance_id = aws_instance.netflix_app.id    # ID of the instance to attach the volume to
+  device_name = "/dev/xvdf"
+  volume_id   = aws_ebs_volume.netflix_data.id
+  instance_id = aws_instance.netflix_app.id
 }
