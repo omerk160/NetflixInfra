@@ -3,13 +3,18 @@ variable "env" {
   type        = string
 }
 
-variable "region" {
+variable "aws_region" {
   description = "AWS region"
   type        = string
 }
 
-variable "vpc_cidr" {
-  description = "CIDR block for the VPC"
+variable "vpc_id" {
+  description = "VPC ID"
+  type        = string
+}
+
+variable "subnet_id" {
+  description = "Subnet ID"
   type        = string
 }
 
@@ -26,9 +31,4 @@ variable "bucket_name" {
 variable "public_key_path" {
   description = "Path to the public key file"
   type        = string
-}
-
-variable "subnet_cidr" {
-  description = "Subnet CIDR blocks"
-  type        = list(string)
 }

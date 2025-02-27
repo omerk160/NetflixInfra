@@ -1,3 +1,7 @@
 env    = "prod"
 region = "eu-north-1"
-ami_id = "ami-02e2af61198e99faf"
+vpc_cidr = "10.0.0.0/16"
+instance_type = "t3.micro"
+bucket_name = "omer-netflix-infra-tfstate"
+public_key_path = "./netflix_tf.pub"
+subnet_cidr = ["10.0.0.0/28", "10.0.0.32/28", "10.0.1.0/28", "10.0.2.0/28"]
