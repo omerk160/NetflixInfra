@@ -45,15 +45,6 @@ pipeline {
                 }
             }
         }
-
-        stage('Trigger Deploy') {
-            steps {
-                build job: 'NetflixDeployPipeline', wait: false, parameters: [
-                    string(name: 'SERVICE_NAME', value: params.SERVICE_NAME),
-                    string(name: 'IMAGE_FULL_NAME_PARAM', value: params.IMAGE_FULL_NAME_PARAM)
-                ]
-            }
-        }
     }
 
     post {
