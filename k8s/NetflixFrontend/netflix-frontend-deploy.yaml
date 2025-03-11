@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: netflix-frontend
-        image: omerk160/nf:7cf4b07
+        image: omerk160/nf:2064f1f
         ports:
         - containerPort: 3000
         env:
