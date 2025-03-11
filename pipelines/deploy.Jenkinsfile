@@ -3,7 +3,7 @@ pipeline {
 
     parameters {
         string(name: 'SERVICE_NAME', defaultValue: 'netflix-frontend', description: 'Name of the service (directory name)')
-        string(name: 'IMAGE_FULL_NAME_PARAM', defaultValue: '', description: 'Full Docker image name including tag')
+        string(name: 'IMAGE_FULL_NAME_PARAM', defaultValue: 'guymeltzer/nf:latest', description: 'Full Docker image name including tag')
     }
 
     stages {
@@ -17,18 +17,12 @@ pipeline {
             steps {
                 script {
                     def yamlFile = "${params.SERVICE_NAME}/${params.SERVICE_NAME}-deploy.yaml"
-                    def image = "${params.IMAGE_FULL_NAME_PARAM}"
+                    def image = params.IMAGE_FULL_NAME_PARAM ?: 'guymeltzer/nf:latest'
 
-                    if (!image?.trim()) {
-                        error("IMAGE_FULL_NAME_PARAM parameter is required!")
-                    }
-
-                    // Update image field using sed
                     sh """
                         sed -i 's|image: .*|image: ${image}|' ${yamlFile}
                     """
 
-                    // Commit changes
                     sh """
                         git config --global user.email "jenkins@yourcompany.com"
                         git config --global user.name "Jenkins"
@@ -48,11 +42,20 @@ pipeline {
                 }
             }
         }
-    }
 
-    post {
-        always {
-            cleanWs()
+        stage('Trigger Deploy') {
+            steps {
+                build job: 'NetflixDeployPipeline', wait: false, parameters: [
+                    string(name: 'SERVICE_NAME', value: "NetflixFrontend"),
+                    string(name: 'IMAGE_FULL_NAME_PARAM', value: "$DOCKER_USERNAME/$IMAGE_BASE_NAME:$IMAGE_TAG")
+                ]
+            }
+        }
+
+        post {
+            cleanup {
+                cleanWs()
+            }
         }
     }
 }
