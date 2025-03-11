@@ -46,16 +46,16 @@ pipeline {
         stage('Trigger Deploy') {
             steps {
                 build job: 'NetflixDeployPipeline', wait: false, parameters: [
-                    string(name: 'SERVICE_NAME', value: "NetflixFrontend"),
-                    string(name: 'IMAGE_FULL_NAME_PARAM', value: "$DOCKER_USERNAME/$IMAGE_BASE_NAME:$IMAGE_TAG")
+                    string(name: 'SERVICE_NAME', value: params.SERVICE_NAME),
+                    string(name: 'IMAGE_FULL_NAME_PARAM', value: params.IMAGE_FULL_NAME_PARAM)
                 ]
             }
         }
+    } // 🔹 Correctly closing the `stages` block
 
-        post {
-            cleanup {
-                cleanWs()
-            }
+    post { // ✅ `post` should be inside `pipeline`, but outside `stages`
+        cleanup {
+            cleanWs()
         }
     }
 }
