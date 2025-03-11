@@ -82,7 +82,7 @@ pipeline {
         stage('Update YAML manifest') {
             steps {
                 script {
-                    def yamlFile = "K8s/${params.SERVICE_NAME}/netflix-frontend-deploy.yaml"
+                    def yamlFile = "k8s/${params.SERVICE_NAME}/netflix-frontend-deploy.yaml"
                     def image = params.IMAGE_FULL_NAME_PARAM ?: 'omerk160/nf:latest'
 
                     sh """
