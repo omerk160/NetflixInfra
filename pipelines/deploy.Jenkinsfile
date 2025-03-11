@@ -19,7 +19,6 @@ pipeline {
                     def yamlFile = "${params.SERVICE_NAME}/${params.SERVICE_NAME}-deploy.yaml"
                     def image = "${params.IMAGE_FULL_NAME_PARAM}"
 
-                    // Ensure IMAGE_FULL_NAME_PARAM is provided
                     if (!image?.trim()) {
                         error("IMAGE_FULL_NAME_PARAM parameter is required!")
                     }
@@ -49,11 +48,11 @@ pipeline {
                 }
             }
         }
+    }
 
-        post {
-            cleanup {
-                cleanWs()
-            }
+    post {
+        always {
+            cleanWs()
         }
     }
 }
