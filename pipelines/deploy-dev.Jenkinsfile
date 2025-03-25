@@ -1,21 +1,27 @@
 pipeline {
-    agent { label 'agent1' }
+    agent any
+
     environment {
-        GITHUB_CREDENTIALS = credentials('github')
+        GIT_REPO = "https://github.com/omerk160/NetflixInfra.git"
+        BRANCH = "dev"
+        IMAGE_TAG = "omer160/netflix-frontend-dev:v1.0.7"
+        YAML_FILE = "k8s/dev/NetflixFrontend/netflix-frontend-deploy.yaml"
     }
+
     stages {
-        stage('Checkout') {
+        stage('Checkout Code') {
             steps {
-                checkout scm
+                git branch: "${BRANCH}", credentialsId: 'github-token', url: "${GIT_REPO}"
             }
         }
 
-        stage('Git setup') {
+        stage('Git Setup') {
             steps {
                 script {
-                    sh 'git config --global user.email "jenkins@yourcompany.com"'
-                    sh 'git config --global user.name "Jenkins"'
-                    sh 'git checkout -b dev || git checkout dev'
+                    sh '''
+                        git config --global user.email "jenkins@yourcompany.com"
+                        git config --global user.name "Jenkins"
+                    '''
                 }
             }
         }
@@ -23,18 +29,27 @@ pipeline {
         stage('Update YAML manifest') {
             steps {
                 script {
-                    sh '[ -f k8s/dev/NetflixFrontend/netflix-frontend-deploy.yaml ] && sed -i "s|image: .*|image: omerk160/netflix-frontend-dev:v1.0.7|" k8s/dev/NetflixFrontend/netflix-frontend-deploy.yaml'
-                    sh 'git add k8s/dev/NetflixFrontend/netflix-frontend-deploy.yaml'
-                    sh 'git commit -m "Update NetflixFrontend image to omerk160/netflix-frontend-dev:v1.0.7"'
+                    sh '''
+                        if [ -f ${YAML_FILE} ]; then
+                            sed -i "s|image: .*|image: ${IMAGE_TAG}|" ${YAML_FILE}
+                            git add ${YAML_FILE}
+                            git commit -m "Update NetflixFrontend image to ${IMAGE_TAG}"
+                        else
+                            echo "YAML file not found!"
+                            exit 1
+                        fi
+                    '''
                 }
             }
         }
 
-        stage('Git push') {
+        stage('Git Push') {
             steps {
-                withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
+                withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
                     script {
-                        sh 'git push https://$GITHUB_TOKEN@github.com/omerk160/NetflixInfra.git dev'
+                        sh '''
+                            git push https://${GITHUB_TOKEN}@github.com/omerk160/NetflixInfra.git ${BRANCH}
+                        '''
                     }
                 }
             }
@@ -42,8 +57,11 @@ pipeline {
     }
 
     post {
-        cleanup {
+        failure {
             cleanWs()
+        }
+        success {
+            echo "Deployment update pushed successfully!"
         }
     }
 }
