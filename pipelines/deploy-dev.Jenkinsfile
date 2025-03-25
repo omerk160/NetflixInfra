@@ -1,5 +1,7 @@
 pipeline {
-    agent any
+    agent {
+        label 'general'
+    }
 
     parameters {
         string(name: 'SERVICE_NAME', defaultValue: 'NetflixFrontend', description: 'Name of the service (directory name)')
